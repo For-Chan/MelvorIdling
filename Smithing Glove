@@ -1,0 +1,35 @@
+// ==UserScript==
+// @name         Smithing Glove
+// @namespace    http://tampermonkey.net/
+// @version
+// @description  Smithing w/ Glove
+// @author       For_Chan
+// @match        https://melvoridle.com/index.php
+// @include      https://melvoridle.com/*
+// @grant        none
+// ==/UserScript==
+
+const FITTY = 50;
+function check_smithGloveAction(){
+    //Remaining Actions Checker
+    notifyPlayer(4, "Checking Remaining Actions...");
+
+    //Check if Gem Glove is Active and Remaining Actions
+    updateGloves(CONSTANTS.shop.gloves.Smithing, 2);
+    let active = glovesTracker[CONSTANTS.shop.gloves.Smithing].isActive;
+    let activeMessage = "Smithing gloves: " + active;
+    let remainder = glovesTracker[CONSTANTS.shop.gloves.Smithing].remainingActions;
+    let remainderMessage = "Remaining Action charges: " + remainder;
+
+    //If < 50 Remaining Actions, Sell ALL Gems, Buy one Gem Glove
+    if(glovesTracker[CONSTANTS.shop.gloves.Smithing].remainingActions <= FITTY){
+        notifyPlayer(5, remainderMessage);
+        notifyPlayer(5, "Buying Gloves...");
+        buyGloves(CONSTANTS.shop.gloves.Smithing);
+    }
+    else{
+        notifyPlayer(4, remainderMessage);
+    }
+};
+
+let smithCheck = setInterval(check_smithGloveAction, 5000);
