@@ -1,0 +1,131 @@
+// ==UserScript==
+// @name         Mining with Gem Glove
+// @namespace    http://tampermonkey.net/
+// @version
+// @description  Mithril mining w/ gem glove
+// @author       For_Chan
+// @match        https://melvoridle.com/index.php
+// @include      https://melvoridle.com/*
+// @grant        none
+// ==/UserScript==
+
+/*
+1. Check if gem glove equipped
+--If not equipped, is it in bank?
+---If not in bank, buy it.
+
+2. Check Glove is Active and Remaining Actions, every 60 seconds
+-if > 0, good to go
+-if <= 100,
+-- Sell ALL Gems
+-- Buy Gloves
+*/
+
+/* Notes:
+Rune Essence Mining = 10
+Mithril Mining = 6
+Gem_Gloves = 339;
+Skill[Mining] = 4;
+*/
+
+notifyPlayer(9, "Mining w/ Gem Gloves");
+
+function check_gemGlove() {
+
+    /*Checks if not mining or if current mined rock is rune essence, then stops functions
+    if(!isMining || currentRock == oreTypes[10]){
+    return;
+    }
+Changing code to automatically begin mining upon launch
+*ONLY ENABLE IF WANTING TO AFK MITHRIL*
+*/
+    notifyPlayer(4, "Checking Gloves...");
+    //Check If Gem Glove not equipped
+    if(equippedItems[CONSTANTS.equipmentSlot.Gloves] !== CONSTANTS.item.Gem_Gloves){
+        notifyPlayer(4, "Gem Gloves are not equipped");
+
+        //Check bank for glove, if it exists, equip
+        if(checkBankForItem(CONSTANTS.item.Gem_Gloves) == true){
+            notifyPlayer(4, "Searching Bank...");
+            equipItem(getBankId(CONSTANTS.item.Gem_Gloves), CONSTANTS.item.Gem_Gloves, 1, selectedEquipmentSet);
+            notifyPlayer(4, "Gloves Equipped");
+        }
+
+        //If no glove found in bank, buy one, equip it,
+        else{
+            notifyPlayer(4, "No gloves found...");
+            if(gp > glovesCost[CONSTANTS.shop.gloves.Gems]){
+                buyGloves(CONSTANTS.shop.gloves.Gems);
+                equipItem(getBankId(CONSTANTS.item.Gem_Gloves), CONSTANTS.item.Gem_Gloves, 1, selectedEquipmentSet);
+            }
+        }
+    }
+};
+const HUNNIT = 100;
+function check_gloveAction(){
+    //Remaining Actions Checker
+    notifyPlayer(4, "Checking Remaining Actions...");
+
+    //Check if Gem Glove is Active and Remaining Actions
+    updateGloves(CONSTANTS.shop.gloves.Gems, 4);
+    let active = glovesTracker[CONSTANTS.shop.gloves.Gems].isActive;
+    let activeMessage = "Gem gloves: " + active;
+    let remainder = glovesTracker[CONSTANTS.shop.gloves.Gems].remainingActions;
+    let remainderMessage = "Remaining Action charges: " + remainder;
+
+    //If < 50 Remaining Actions, Sell ALL Gems, Buy one Gem Glove
+    if(glovesTracker[CONSTANTS.shop.gloves.Gems].remainingActions <= HUNNIT){
+        notifyPlayer(4, remainderMessage);
+        notifyPlayer(4, "Selling gems...");
+        updateSellQty(69696969);
+        sellItem(getBankId(CONSTANTS.item.Topaz), sellQty);
+        sellItem(getBankId(CONSTANTS.item.Sapphire), sellQty);
+        sellItem(getBankId(CONSTANTS.item.Ruby), sellQty);
+        sellItem(getBankId(CONSTANTS.item.Emerald), sellQty);
+        sellItem(getBankId(CONSTANTS.item.Diamond), sellQty);
+        buyGloves(CONSTANTS.shop.gloves.Gems);
+    }
+    else{
+        notifyPlayer(4, remainderMessage);
+    }
+};
+//check_gloveAction runs every 30 seconds
+let action_check = window.setInterval(check_gloveAction, 30000);
+
+const COAL = 3;
+const ADAMANTITE = 7;
+const RUNITE = 8;
+const DRAGONITE = 9;
+const MITHRIL = 6;
+function mine_ore(){
+    //Mine runite while not depleted and currently mining mithril
+    if(isMining){
+        if(rockData[RUNITE].depleted == false && currentRock == DRAGONITE){
+           mineRock(RUNITE, true);
+        }
+        if(rockData[RUNITE].depleted == true && currentRock == RUNITE){
+            mineRock(DRAGONITE, true);
+        }
+    }
+};
+//call mine_ore function from console
+let mine_check = window.setInterval(mine_ore, 1000);
+/*        //If Dragonite is not depleted, mine it
+        if(rockData[DRAGONITE].depleted == false){
+            mineRock(DRAGONITE, true);
+        }
+        else{
+            //If dragonite is depleted, and Runite is not, mine Runite
+            if(rockData[RUNITE].depleted == false){
+                mineRock(RUNITE, true);
+            }
+            //If dragonite is depleted, and Runite is depleted, mine Mithril
+            else{
+                mineRock(MITHRIL, true);
+            }
+        }*/
+//Once mine_ore function is called once, initiate set interval every 10 seconds
+
+
+//call check_gemGlove after waiting 10 seconds
+let glove_check = window.setTimeout(check_gemGlove, 10000);
